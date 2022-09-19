@@ -11,9 +11,10 @@ GameObject:
   - component: {fileID: 6501022531070752038}
   - component: {fileID: 6501022531070752033}
   - component: {fileID: 6501022531070752032}
+  - component: {fileID: 1574393008}
   m_Layer: 0
   m_Name: Tile
-  m_TagString: Untagged
+  m_TagString: Tile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -71,8 +72,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -498910945
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 3ceb71486e6853844ba684386c096d96, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -97,3 +98,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee1cd589c0a1d484a9b1afc84033ed59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  tilePrefab: {fileID: 6501022531070752035}
+  selected: 0
+  neighbors:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  tileSprites:
+  - {fileID: 21300000, guid: 1818a9f416289a840bb3c41914f9a7d9, type: 3}
+  - {fileID: 21300000, guid: 2fb23b7b41bd4ea4cb643a71724eabe4, type: 3}
+  - {fileID: 21300000, guid: 3ceb71486e6853844ba684386c096d96, type: 3}
+  - {fileID: 21300000, guid: 81c281b4cf414db43b944c341dfe641e, type: 3}
+  - {fileID: 21300000, guid: 3a6023be19ca9534a8ee5d621313e6eb, type: 3}
+  - {fileID: 21300000, guid: 13578bda15c4658418138c39d9bc35e1, type: 3}
+  - {fileID: 21300000, guid: 25ed0911118fa8448b2a8ae1a8a255e2, type: 3}
+  - {fileID: 21300000, guid: 71e8ca0cb04de114cbbbf20738ed0601, type: 3}
+  type: blank
+  priority: 0
+  x: 0
+  y: 0
+--- !u!60 &1574393008
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6501022531070752035}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0}
+    oldSize: {x: 1.875, y: 1.1875}
+    newSize: {x: 1.875, y: 1.1875}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: 0.0029681325, y: 1.0823439}
+      - {x: -0.7514547, y: 0.7172659}
+      - {x: -0.003229022, y: 0.34890017}
+      - {x: 0.7607963, y: 0.71953607}

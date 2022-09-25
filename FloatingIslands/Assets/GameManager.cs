@@ -12,12 +12,24 @@ public class GameManager : MonoBehaviour
     public GameObject tilePrefab;
     public GameObject dottedOutlinePrefab;
     public GameObject draftOptionsPrefab;
-    public GameObject draftQueueItemPrefab;
+    public GameObject draftListItemPrefab;
     public Sprite[] tileSprites;
     public List<string> draftableTileTypes = new List<string>(){"house_1", "house_2", "house_3", "watermill", "wheat"};
+
     public System.Random r = new System.Random();
 
-    public Stack<GameObject> draftQueue = new Stack<GameObject>();
+    public string currentPlaceableTile;
+    public int currentPlaceableTileIndex = -1;
+    TMP_Text populationUI;
+    TMP_Text foodUI;
+    TMP_Text activityUI;
+    Camera cam;
+    float camHeight;
+    float camWidth;
+
+    public Tile[,] tileArray = new Tile[1000, 1000];
+    public List<Queue<Tile>> tileQueue = new List<Queue<Tile>>();
+    public List<GameObject> draftList = new List<GameObject>();
 
     private int population = 0;
     public int Population {
@@ -49,12 +61,16 @@ public class GameManager : MonoBehaviour
         }
         set {
             SelectedTile = null;
-            if (value == "drafting") { Time.timeScale = 0; }
-            if (mode == "drafting" && value != mode) {Time.timeScale = 1; }
+            if (value == "drafting") { 
+                //Time.timeScale = 0; 
+                activityUI.text = "Choose a tile!";
+            }
+            //if (mode == "drafting" && value != mode) {Time.timeScale = 1; }
+            if (value == "placing") { activityUI.text = "Select a location for your new tile"; }
+            if (value == "navigating") { activityUI.text = "You are navigating the gamespace"; }
             mode = value;
         }
     }
-    public string currentPlaceableTile;
 
     private Tile selectedTile;
     public Tile SelectedTile {
@@ -65,39 +81,31 @@ public class GameManager : MonoBehaviour
             if (selectedTile != value) {
                 if (selectedTile != null) {
                     Destroy(selectedTile.transform.Find("DottedOutline(Clone)").gameObject);
-                    selectedTile.selected = false;
+                    selectedTile.isSelected = false;
                 }
                 if (value != null) {
                     GameObject newOutline = GameObject.Instantiate(dottedOutlinePrefab, value.gameObject.transform);
                     newOutline.transform.parent = value.gameObject.transform;
-                    value.selected = true;
+                    value.isSelected = true;
                 }
                 selectedTile = value;
             } else {
                 if (selectedTile != null) {
                     Destroy(value.gameObject.transform.Find("DottedOutline(Clone)").gameObject);
                     selectedTile = null;
-                    value.selected = false;
+                    value.isSelected = false;
                 }
             }
         }
     }
 
-    TMP_Text populationUI;
-    TMP_Text foodUI;
-    Camera cam;
-    float camHeight;
-    float camWidth;
-
-    public Tile[,] tileArray = new Tile[1000, 1000];
-    public List<Stack<Tile>> tileQueue = new List<Stack<Tile>>();
-
     void Awake() {
         foodUI = GameObject.Find("FoodUI").GetComponent<TMP_Text>();
         populationUI = GameObject.Find("PopulationUI").GetComponent<TMP_Text>();
+        activityUI = GameObject.Find("ActivityUI").GetComponent<TMP_Text>();
 
         for (int i = 0; i < 10; i++) {
-            tileQueue.Add(new Stack<Tile>());
+            tileQueue.Add(new Queue<Tile>());
         }
 
         for (int i = 0; i < 1000; i++) {
@@ -112,8 +120,8 @@ public class GameManager : MonoBehaviour
 
         SpawnPreset(0);
 
-        //AddDraft("House_1");
-        Draft();
+        DraftListAdd("house_1");
+        DraftListAdd("house_2");
 
     }
 
@@ -121,28 +129,27 @@ public class GameManager : MonoBehaviour
     }
 
     void AddTilesToQueue() {
-        Stack<(int, int)> stack = new Stack<(int, int)>();
+        Queue<(int, int)> queue = new Queue<(int, int)>();
         bool[,] vis = new bool[1000, 1000];
         int[] adjX = { 0, 1, 0, -1 };
         int[] adjY = { -1, 0, 1, 0 };
 
-        stack.Push((500, 500));
+        queue.Enqueue((500, 500));
         int x, y, newX, newY;
-        while(stack.Count > 0) {
-            (int, int) curr = ((int, int))stack.Peek();
-            stack.Pop();
+        while(queue.Count > 0) {
+            (int, int) curr = ((int, int))queue.Peek();
+            queue.Dequeue();
             x = curr.Item1;
             y = curr.Item2;
             if (vis[x, y]){ continue; }
             vis[x, y] = true;
 
-            Debug.Log(tileArray[x, y]);
-            tileQueue[tileArray[x, y].priority].Push(tileArray[x, y]);
+            tileQueue[tileArray[x, y].priority].Enqueue(tileArray[x, y]);
 
             for(int i = 0; i < 4; i++) {
                 newX = x + adjX[i];
                 newY = y + adjY[i];
-                if (tileArray[newX, newY] != null && tileArray[newX, newY].priority < 10) { stack.Push((newX, newY)); }
+                if (tileArray[newX, newY] != null && tileArray[newX, newY].priority < 10) { queue.Enqueue((newX, newY)); }
             }
         }
 
@@ -152,7 +159,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < 10; i++) {
             while (tileQueue[i].Count > 0) {
                 tileQueue[i].Peek().Evaluate();
-                tileQueue[i].Pop();
+                tileQueue[i].Dequeue();
             }
         }
     }
@@ -162,22 +169,37 @@ public class GameManager : MonoBehaviour
         GameObject newDraftOptions = GameObject.Instantiate(draftOptionsPrefab, new Vector2(0, -5f), Quaternion.identity);
         newDraftOptions.transform.parent = GameObject.Find("Canvas").transform;
     }
-/*
-    public void DraftQueueInsert(string draftType) {
-        draftQueue.Push(GameObject.Instantiate(draftQueueItemPrefab, new Vector2(0, 0), Quaternion.identity));
-        GameObject newDraftQueueItem = GameObject.Instantiate(draftQueueItemPrefab, new Vector2(-400 + (draftQueue.Count - 1)*100, -240), Quaternion.identity);
-        newDraftQueueItem.transform.parent = GameObject.Find("UICanvas");
+
+    public void Draft(string newType) {
+        Mode = "placing";
+        currentPlaceableTile = newType;
     }
 
-    public void DraftQueuePop(string draftType) {
-        GameObject top = draftQueue.Peek();
-        Draft(top.GetComponent<DraftQueueItem>().type);
-        Destroy(top);
-        draftQueue.Pop();
-        foreach (GameObject item in draftQueue) {
-            item.transform.x -= 100;
+    public void Draft(string newType, int newPlaceableTileIndex) {
+        Mode = "placing";
+        currentPlaceableTile = newType;
+        currentPlaceableTileIndex = newPlaceableTileIndex;
+    }
+
+    public void DraftListAdd(string draftType) {
+        GameObject newDraftListItem = GameObject.Instantiate(draftListItemPrefab, new Vector2(0, 0), Quaternion.identity);
+        newDraftListItem.transform.SetParent(GameObject.Find("DraftListItemCanvas").transform, false);
+        newDraftListItem.transform.localPosition = new Vector2(-400f + (draftList.Count)*110f, -220f);
+        newDraftListItem.GetComponent<DraftListItem>().index = draftList.Count;
+        newDraftListItem.GetComponent<DraftListItem>().type = draftType;
+        newDraftListItem.GetComponent<DraftListItem>().SetSprite();
+        draftList.Add(newDraftListItem);
+    }
+
+    public void DraftListRemove(int index) {
+        Draft(draftList[index].GetComponent<DraftListItem>().type);
+        for (int i = index; i < draftList.Count; i++) {
+            draftList[i].transform.localPosition = new Vector2(draftList[i].transform.localPosition.x - 110f, draftList[i].transform.localPosition.y);
+            draftList[i].GetComponent<DraftListItem>().index -= 1;
         }
-    }*/
+        Destroy(draftList[index]);
+        draftList.RemoveAt(index);
+    }
 
     public void SpawnPreset(int presetNum) {
         string center = "";
@@ -188,33 +210,38 @@ public class GameManager : MonoBehaviour
         }
 
         Tile newTile = GameObject.Instantiate(tilePrefab, new Vector2(0, 0), Quaternion.identity).GetComponent<Tile>();
-        newTile.Init(center);
+        newTile.type = center;
+        newTile.Init();
         newTile.coords = (500, 500);
         tileArray[500,500] = newTile;
 
         Tile newBlankTile = GameObject.Instantiate(tilePrefab, new Vector2(tileWidth, tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
-        newBlankTile.Init("blank");
+        newBlankTile.type = "blank";
+        newBlankTile.Init();
         newTile.neighbors[0] = newBlankTile;
         newBlankTile.neighbors[2] = newTile;
         newBlankTile.coords = (501, 500);
         tileArray[501,500] = newBlankTile;
 
         Tile newBlankTile1 = GameObject.Instantiate(tilePrefab, new Vector2(tileWidth, -tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
-        newBlankTile1.Init("blank");
+        newBlankTile1.type = "blank";
+        newBlankTile1.Init();
         newTile.neighbors[1] = newBlankTile1;
         newBlankTile1.neighbors[3] = newTile;
         newBlankTile1.coords = (500, 499);
         tileArray[500,499] = newBlankTile;
 
         Tile newBlankTile2 = GameObject.Instantiate(tilePrefab, new Vector2(-tileWidth, tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
-        newBlankTile2.Init("blank");
+        newBlankTile2.type = "blank";
+        newBlankTile2.Init();
         newTile.neighbors[3] = newBlankTile2;
         newBlankTile2.neighbors[1] = newTile;
         newBlankTile2.coords = (500, 501);
         tileArray[500,501] = newBlankTile;
 
         Tile newBlankTile3 = GameObject.Instantiate(tilePrefab, new Vector2(-tileWidth, -tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
-        newBlankTile3.Init("blank");
+        newBlankTile3.type = "blank";
+        newBlankTile3.Init();
         newTile.neighbors[2] = newBlankTile3;
         newBlankTile3.neighbors[0] = newTile;
         newBlankTile3.coords = (499, 500);

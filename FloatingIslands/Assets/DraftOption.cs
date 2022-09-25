@@ -35,8 +35,8 @@ public class DraftOption : MonoBehaviour
     }
 
     public void OnMouseDown() {
-        gameManager.Mode = "placing";
-        gameManager.currentPlaceableTile = type;
+        gameManager.DraftListAdd(type);
+        gameManager.Mode = "navigating";
         Destroy(transform.parent.gameObject);
     }
 }

@@ -10,7 +10,7 @@ public class DraftButton : MonoBehaviour
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
     public void OnMouseDown() {
-        if(gameManager.Population >= 1) {
+        if(gameManager.Mode == "navigating" && gameManager.Population >= 1) {
             gameManager.Population -= 1;
             gameManager.Draft();
         }

@@ -12,5 +12,6 @@ public class Background : MonoBehaviour
 
     public void OnMouseDown() {
         gameManager.SelectedTile = null;
+        gameManager.Mode = "navigating";
     }
 }

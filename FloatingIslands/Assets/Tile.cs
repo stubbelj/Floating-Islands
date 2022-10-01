@@ -48,6 +48,9 @@ public class Tile : MonoBehaviour
     public void OnMouseDown() {
         if (type != "blank") {
             gameManager.SelectedTile = gameObject.GetComponent<Tile>();
+            if (gameManager.Mode == "placing") {
+                gameManager.Mode = "navigating";
+            }
         } else if (gameManager.Mode == "placing" && !isOccupied) {
             gameManager.SelectedTile = null;
             gameObject.GetComponent<SpriteRenderer>().sprite = gameManager.tileSprites[1];
@@ -77,7 +80,7 @@ public class Tile : MonoBehaviour
     public IEnumerator SpawnNewTile(string newType) {
         isOccupied = true;
         Tile newTile = GameObject.Instantiate(tilePrefab, new Vector2(transform.position.x + (neighbors[2] != null && neighbors[2].type != "blank" || neighbors[3] != null && neighbors[3].type != "blank" ? 1 : - 1)*5, transform.position.y + (neighbors[1] != null && neighbors[1].type != "blank" || neighbors[2] != null && neighbors[2].type != "blank" ? 1 : - 1)*5), Quaternion.identity).GetComponent<Tile>();
-        newTile.sr.sortingOrder = 10;
+        //newTile.sr.sortingOrder = 10;
         newTile.type = newType;
         newTile.Init();
         newTile.coords = coords;
@@ -89,7 +92,7 @@ public class Tile : MonoBehaviour
         SpawnAdjacentBlanks();
         newTile.neighbors = Neighbors(coords);
         tileArray[coords.Item1,coords.Item2] = newTile;
-        newTile.sr.sortingOrder = 0;
+        //newTile.sr.sortingOrder = 0;
         newTile.BeginProduction();
         Destroy(gameObject);
     }
@@ -210,24 +213,24 @@ public class Tile : MonoBehaviour
         while (true) {
             switch(type) {
                 case "house_1":
-                    yield return new WaitForSeconds(2f);
+                    yield return new WaitForSeconds(5f);
                     gameManager.Population += 1;
                     break;
                 case "house_2":
-                    yield return new WaitForSeconds(2f);
+                    yield return new WaitForSeconds(5f);
                     gameManager.Population += 2;
                     break;
                 case "house_3":
-                    yield return new WaitForSeconds(2f);
+                    yield return new WaitForSeconds(5f);
                     gameManager.Population += 3;
                     break;
                 case "watermill":
-                    yield return new WaitForSeconds(2f);
-                    gameManager.Population += 1;
+                    yield return new WaitForSeconds(5f);
+                    gameManager.Food += 2;
                     break;
                 case "wheat":
-                    yield return new WaitForSeconds(2f);
-                    gameManager.Food += 2;
+                    yield return new WaitForSeconds(5f);
+                    gameManager.Food += 1;
                     break;
             }
         }

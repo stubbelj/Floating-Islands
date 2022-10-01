@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
     Camera cam;
     float camHeight;
     float camWidth;
+    public int currentDraftCost = 0;
 
     public Tile[,] tileArray = new Tile[1000, 1000];
     public List<Queue<Tile>> tileQueue = new List<Queue<Tile>>();
@@ -80,8 +81,10 @@ public class GameManager : MonoBehaviour
         set {
             if (selectedTile != value) {
                 if (selectedTile != null) {
-                    Destroy(selectedTile.transform.Find("DottedOutline(Clone)").gameObject);
-                    selectedTile.isSelected = false;
+                    if (GameObject.Find("DottedOutline(Clone)") != null) {
+                        Destroy(selectedTile.transform.Find("DottedOutline(Clone)").gameObject);
+                        selectedTile.isSelected = false;
+                    }
                 }
                 if (value != null) {
                     GameObject newOutline = GameObject.Instantiate(dottedOutlinePrefab, value.gameObject.transform);
@@ -189,6 +192,7 @@ public class GameManager : MonoBehaviour
         newDraftListItem.GetComponent<DraftListItem>().type = draftType;
         newDraftListItem.GetComponent<DraftListItem>().SetSprite();
         draftList.Add(newDraftListItem);
+        selectedTile = newDraftListItem.GetComponent<Tile>();
     }
 
     public void DraftListRemove(int index) {

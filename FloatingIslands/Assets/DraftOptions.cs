@@ -18,8 +18,10 @@ public class DraftOptions : MonoBehaviour
             int randomInt = r.Next(tempDraftableTileTypes.Count);
             string newType = tempDraftableTileTypes[randomInt];
             tempDraftableTileTypes.RemoveAt(randomInt);
-            child.gameObject.GetComponent<DraftOption>().type = newType;
-            child.gameObject.GetComponent<DraftOption>().SetSprite();
+            DraftOption newchild = child.gameObject.GetComponent<DraftOption>();
+            newchild.type = newType;
+            newchild.Init();
+            newchild.text.text = newchild.description;
         }
     }
 }

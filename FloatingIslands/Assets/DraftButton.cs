@@ -12,7 +12,7 @@ public class DraftButton : MonoBehaviour
     public void OnMouseDown() {
         if(gameManager.Mode == "navigating" && gameManager.Population >= gameManager.currentDraftCost) {
             gameManager.Population -= gameManager.currentDraftCost;
-            gameManager.currentDraftCost += 10;
+            gameManager.currentDraftCost += 0;
             gameManager.Draft();
         }
     }

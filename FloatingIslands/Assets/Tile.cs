@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class Tile : MonoBehaviour
 {
-    public GameObject tilePrefab;
+    public Dictionary<string, GameObject> tilePrefabs;
+    public Sprite blankFillerSprite;
     float tileWidth = 0.8745f;
     float tileHeight = 0.8745f;
     Camera cam;
@@ -18,9 +20,11 @@ public class Tile : MonoBehaviour
     public bool isSelected = false;
     public Tile[] neighbors = {null, null, null, null};
     public string type = "blank";
+    public string description = "no assigned description";
     public bool isUI = false;
     bool isOccupied = false;
     public int priority = 0;
+    public TMP_Text text;
 
     public (int, int) coords = (0, 0);
     public int x;
@@ -37,6 +41,8 @@ public class Tile : MonoBehaviour
         }
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         tileArray = gameManager.tileArray;
+        tilePrefabs = gameManager.tilePrefabs;
+
     }
 
     void Update() {
@@ -53,7 +59,7 @@ public class Tile : MonoBehaviour
             }
         } else if (gameManager.Mode == "placing" && !isOccupied) {
             gameManager.SelectedTile = null;
-            gameObject.GetComponent<SpriteRenderer>().sprite = gameManager.tileSprites[1];
+            gameObject.GetComponent<SpriteRenderer>().sprite = blankFillerSprite;
             StartCoroutine(SpawnNewTile(gameManager.currentPlaceableTile));
             if (gameManager.currentPlaceableTileIndex != -1) {
                 gameManager.DraftListRemove(gameManager.currentPlaceableTileIndex);
@@ -65,24 +71,26 @@ public class Tile : MonoBehaviour
 
     public void OnMouseOver() {
         if (type == "blank" && gameManager.Mode == "placing") {
+            Debug.Log(gameManager.Mode);
             sr.sprite = gameManager.SelectedTile.img.sprite;
             //sr.color -= new Color(1, 1, 1, 0.5f);
         }
     }
 
     public void OnMouseExit() {
-        if(type == "blank" && sr.sprite != gameManager.tileSprites[0] && sr.sprite != gameManager.tileSprites[1]) {
+        if(type == "blank" && sr.sprite != gameManager.dottedOutlineSprite && sr.sprite != gameManager.blankFillerSprite) {
             //sr.color = new Color(1, 1, 1, 1);
-            sr.sprite = gameManager.tileSprites[0];
+            sr.sprite = gameManager.dottedOutlineSprite;
         }
     }
 
     public IEnumerator SpawnNewTile(string newType) {
         isOccupied = true;
-        Tile newTile = GameObject.Instantiate(tilePrefab, new Vector2(transform.position.x + (neighbors[2] != null && neighbors[2].type != "blank" || neighbors[3] != null && neighbors[3].type != "blank" ? 1 : - 1)*5, transform.position.y + (neighbors[1] != null && neighbors[1].type != "blank" || neighbors[2] != null && neighbors[2].type != "blank" ? 1 : - 1)*5), Quaternion.identity).GetComponent<Tile>();
+        sr.sprite = gameManager.blankFillerSprite;
+        Tile newTile = GameObject.Instantiate(tilePrefabs[newType], new Vector2(transform.position.x + (neighbors[2] != null && neighbors[2].type != "blank" || neighbors[3] != null && neighbors[3].type != "blank" ? 1 : - 1)*5, transform.position.y + (neighbors[1] != null && neighbors[1].type != "blank" || neighbors[2] != null && neighbors[2].type != "blank" ? 1 : - 1)*5), Quaternion.identity).GetComponent<Tile>();
         //newTile.sr.sortingOrder = 10;
-        newTile.type = newType;
         newTile.Init();
+        newTile.type = newType;
         newTile.coords = coords;
 
         while(newTile.transform.position != transform.position) {
@@ -95,60 +103,6 @@ public class Tile : MonoBehaviour
         //newTile.sr.sortingOrder = 0;
         newTile.BeginProduction();
         Destroy(gameObject);
-    }
-
-    public void Init() {
-        switch(type) {
-            case "blank":
-                priority = 9;
-                break;
-            case "grass":
-                priority = 9;
-                break;
-            case "house_1":
-                priority = 0;
-                break;
-            case "house_2":
-                priority = 0;
-                break;
-            case "house_3":
-                priority = 0;
-                break;
-            case "watermill":
-                priority = 0;
-                break;
-            case "wheat":
-                priority = 0;
-                break;
-        }
-        SetSprite();
-    }
-
-    public void SetSprite() {
-        switch(type) {
-            case "blank":
-                sr.sprite = gameManager.tileSprites[0];
-                break;
-            case "grass":
-
-                sr.sprite = gameManager.tileSprites[2];
-                break;
-            case "house_1":
-                sr.sprite = gameManager.tileSprites[3];
-                break;
-            case "house_2":
-                sr.sprite = gameManager.tileSprites[4];
-                break;
-            case "house_3":
-                sr.sprite = gameManager.tileSprites[5];
-                break;
-            case "watermill":
-                sr.sprite = gameManager.tileSprites[9];
-                break;
-            case "wheat":
-                sr.sprite = gameManager.tileSprites[11];
-                break;
-        }
     }
 
     Vector2 NeighborPositionByIndex(Vector2 pos, int index) {
@@ -177,10 +131,10 @@ public class Tile : MonoBehaviour
     }
 
     void SpawnAdjacentBlanks() {
-        Tile[] adjList = Neighbors(coords);
         for (int i = 0; i < 4; i++) {
+            Tile[] adjList = Neighbors(coords);
             if (adjList[i] == null) {
-                Tile newBlankTile = GameObject.Instantiate(tilePrefab, NeighborPositionByIndex(transform.position, i), Quaternion.identity).GetComponent<Tile>();
+                Tile newBlankTile = GameObject.Instantiate(tilePrefabs["blank"], NeighborPositionByIndex(transform.position, i), Quaternion.identity).GetComponent<Tile>();
                 newBlankTile.type = "blank";
                 newBlankTile.Init();
                 newBlankTile.coords = NeighborCoordsByIndex(i);
@@ -190,6 +144,7 @@ public class Tile : MonoBehaviour
         }
     }
 
+    //not currently in use 
     public void Evaluate() {
         switch(type) {
             case "house_1":
@@ -206,33 +161,14 @@ public class Tile : MonoBehaviour
     }
 
     public void BeginProduction() {
-        StartCoroutine(Produce());
+        Produce();
     }
 
-    public IEnumerator Produce() {
-        while (true) {
-            switch(type) {
-                case "house_1":
-                    yield return new WaitForSeconds(5f);
-                    gameManager.Population += 1;
-                    break;
-                case "house_2":
-                    yield return new WaitForSeconds(5f);
-                    gameManager.Population += 2;
-                    break;
-                case "house_3":
-                    yield return new WaitForSeconds(5f);
-                    gameManager.Population += 3;
-                    break;
-                case "watermill":
-                    yield return new WaitForSeconds(5f);
-                    gameManager.Food += 2;
-                    break;
-                case "wheat":
-                    yield return new WaitForSeconds(5f);
-                    gameManager.Food += 1;
-                    break;
-            }
-        }
+    public void Produce() {
+        //intentionally left empty, overwritten by tile classes that produce
+    }
+
+    public void Init() {
+        //intentionally blank, overwritten by all tile subclasses
     }
 }

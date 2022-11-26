@@ -9,14 +9,40 @@ public class GameManager : MonoBehaviour
     float tileWidth = 0.8745f;
     float tileHeight = 0.8745f;
 
-    public GameObject tilePrefab;
+    public Dictionary<string, GameObject> tilePrefabs = new Dictionary<string, GameObject>();
+    public List<GameObject> tilePrefabsList = new List<GameObject>();
     public GameObject dottedOutlinePrefab;
     public GameObject draftOptionsPrefab;
     public GameObject draftListItemPrefab;
-    public Sprite[] tileSprites;
-    public List<string> draftableTileTypes = new List<string>(){"house_1", "house_2", "house_3", "watermill", "wheat"};
+    public List<string> draftableTileTypes = new List<string>();
+    public Dictionary<string, string> tileDescriptions = new Dictionary<string, string>(){
+        {"bioengineering_lab", "A laboratory for genetic engineering research."},
+        {"blank", "A blank tile. You should not be able to read the description for this."},
+        {"blood_shrine", "An altar for ritual of the most despicable kind."},
+        {"factory", "Industrialization begins with the explotation of the workforce."},
+        {"fortune_teller", "See your future, and know your fate."},
+        {"fungus_farm", "Composting strengthens soil and reduces waste!"},
+        {"gold_mine", "We've struck gold!"},
+        {"grass", "A grassy tile."},
+        {"house_1", "A tiny abode for a lonely individual."},
+        {"house_2", "A modest structure just right for a couple."},
+        {"house_3", "Is three a crowd?"},
+        {"junkyard", "Reduce, Reuse, Recycle!"},
+        {"lake", "Ideal for fishing."},
+        {"marketplace", "The bustling center of commerce and community."},
+        {"shortcut", "Bend space to gurantee instant delivery times."},
+        {"spore_tower", "A mighty mycelium mansion."},
+        {"solar_panel", "Harness the power of the sun!"},
+        {"teleporter", "Reshape earth and air as you see fit."},
+        {"watermill", "A classic and not yet obselete device."},
+        {"wheat", "Golden fields of grain."},
+        {"wonk_chemical_plant", "Take care never to Wonk! outside the prescence of a standardized Wonk! anchor."},
+        {"wonk_hq", "The Wonk! Corporation is not responsible for damage or injuries sustained during Wonk!-ing."}
+    };
 
     public System.Random r = new System.Random();
+    public Sprite dottedOutlineSprite;
+    public Sprite blankFillerSprite;
 
     public string currentPlaceableTile;
     public int currentPlaceableTileIndex = -1;
@@ -61,6 +87,7 @@ public class GameManager : MonoBehaviour
             return mode;
         }
         set {
+            modeDisplay = value;
             SelectedTile = null;
             if (value == "drafting") { 
                 //Time.timeScale = 0; 
@@ -72,6 +99,8 @@ public class GameManager : MonoBehaviour
             mode = value;
         }
     }
+
+    public string modeDisplay = "navigating";
 
     private Tile selectedTile;
     public Tile SelectedTile {
@@ -102,7 +131,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void Awake() {
+    void Awake() {        
+        foreach (GameObject tilePrefab in tilePrefabsList) {
+            tilePrefabs[tilePrefab.name] = tilePrefab;
+        }
+
         foodUI = GameObject.Find("FoodUI").GetComponent<TMP_Text>();
         populationUI = GameObject.Find("PopulationUI").GetComponent<TMP_Text>();
         activityUI = GameObject.Find("ActivityUI").GetComponent<TMP_Text>();
@@ -190,7 +223,7 @@ public class GameManager : MonoBehaviour
         newDraftListItem.transform.localPosition = new Vector2(-400f + (draftList.Count)*110f, -220f);
         newDraftListItem.GetComponent<DraftListItem>().index = draftList.Count;
         newDraftListItem.GetComponent<DraftListItem>().type = draftType;
-        newDraftListItem.GetComponent<DraftListItem>().SetSprite();
+        newDraftListItem.GetComponent<DraftListItem>().Init();
         draftList.Add(newDraftListItem);
         selectedTile = newDraftListItem.GetComponent<Tile>();
     }
@@ -213,43 +246,43 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        Tile newTile = GameObject.Instantiate(tilePrefab, new Vector2(0, 0), Quaternion.identity).GetComponent<Tile>();
-        newTile.type = center;
+        Tile newTile = GameObject.Instantiate(tilePrefabs[center], new Vector2(0, 0), Quaternion.identity).GetComponent<Tile>();
         newTile.Init();
         newTile.coords = (500, 500);
         tileArray[500,500] = newTile;
+        newTile.type = center;
 
-        Tile newBlankTile = GameObject.Instantiate(tilePrefab, new Vector2(tileWidth, tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
-        newBlankTile.type = "blank";
+        Tile newBlankTile = GameObject.Instantiate(tilePrefabs["blank"], new Vector2(tileWidth, tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
         newBlankTile.Init();
         newTile.neighbors[0] = newBlankTile;
         newBlankTile.neighbors[2] = newTile;
         newBlankTile.coords = (501, 500);
         tileArray[501,500] = newBlankTile;
 
-        Tile newBlankTile1 = GameObject.Instantiate(tilePrefab, new Vector2(tileWidth, -tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
-        newBlankTile1.type = "blank";
+        Tile newBlankTile1 = GameObject.Instantiate(tilePrefabs["blank"], new Vector2(tileWidth, -tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
         newBlankTile1.Init();
         newTile.neighbors[1] = newBlankTile1;
         newBlankTile1.neighbors[3] = newTile;
         newBlankTile1.coords = (500, 499);
         tileArray[500,499] = newBlankTile;
 
-        Tile newBlankTile2 = GameObject.Instantiate(tilePrefab, new Vector2(-tileWidth, tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
-        newBlankTile2.type = "blank";
+        Tile newBlankTile2 = GameObject.Instantiate(tilePrefabs["blank"], new Vector2(-tileWidth, tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
         newBlankTile2.Init();
         newTile.neighbors[3] = newBlankTile2;
         newBlankTile2.neighbors[1] = newTile;
         newBlankTile2.coords = (500, 501);
         tileArray[500,501] = newBlankTile;
 
-        Tile newBlankTile3 = GameObject.Instantiate(tilePrefab, new Vector2(-tileWidth, -tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
-        newBlankTile3.type = "blank";
+        Tile newBlankTile3 = GameObject.Instantiate(tilePrefabs["blank"], new Vector2(-tileWidth, -tileHeight / 2), Quaternion.identity).GetComponent<Tile>();
         newBlankTile3.Init();
         newTile.neighbors[2] = newBlankTile3;
         newBlankTile3.neighbors[0] = newTile;
         newBlankTile3.coords = (499, 500);
         tileArray[499,500] = newBlankTile;
+
+        foreach(string type in tilePrefabs.Keys) {
+            draftableTileTypes.Add(type);
+        }
     }
 
 }

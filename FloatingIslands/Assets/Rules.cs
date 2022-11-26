@@ -1,9 +1,15 @@
 /*
 TODO:
     Feature:
+        make population a cumulative resource
         implement bioengineering lab, market, solar panels, factory, wonk! chemical plant, wonk! hq, gold mine, blood shrine, fortune teller, junkyard, fungus farm, spore tower, shortcut
+        activatable tiles
+
 
     Bug:
+        drafting not implemented
+        good lord drafting is broken
+        dotted lines vanishing
         tiles rendering on top of draftqueueitems
 
 
